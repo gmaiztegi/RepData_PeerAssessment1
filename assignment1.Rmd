@@ -1,0 +1,46 @@
+---
+title: "RepData Assignment 1"
+output: html_document
+---
+
+Loading and processing data:
+```{r}
+library(data.table)
+data <- data.table(read.csv("activity.csv", colClasses = c(NA, "Date", NA)))
+```
+
+### What is mean total number of steps taken per day?
+```{r}
+library(ggplot2)
+stepsPerDay <- data[,list(steps=sum(steps)), by=date]
+qplot(steps, data = stepsPerDay, geom="histogram")
+mean(stepsPerDay[complete.cases(stepsPerDay), steps])
+median(stepsPerDay[complete.cases(stepsPerDay), steps])
+```
+
+### What is the average daily activity pattern?
+
+```{r}
+dailyActivity <- data[complete.cases(data),list(activity=mean(steps)), by=interval]
+qplot(interval, activity, data = dailyActivity, geom = "line")
+```
+
+### Imputing missing values
+How many NA values are there?
+```{r}
+sum(is.na(data[,steps]))
+```
+
+Lets fill those values:
+```{r}
+nas <- is.na(data[,steps])
+means <- data[complete.cases(data),list(steps=mean(steps)), by="interval"]
+filledData <- merge(data, means, by="interval", suffixes = c("", ".mean"))
+filledData$steps[nas] <- filledData$steps.mean[nas]
+```
+
+And the histogram:
+```{r}
+stepsPerDayFilled <- filledData[,list(steps=sum(steps)), by=date]
+qplot(steps, data = stepsPerDayFilled, geom="histogram")
+```
